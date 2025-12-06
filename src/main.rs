@@ -1,7 +1,8 @@
-use eframe::egui;
+use eframe::egui::{self, ScrollArea};
 use rfd;
-use std::fs;
+use std::{fs::{self, File}, io::Write};
 mod similarity_matrix;
+mod smith_waterman;
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
@@ -138,7 +139,11 @@ impl eframe::App for LoAlFindApp {
 
                 ui.vertical(|ui| {
                     ui.label("Result:");
-                    ui.text_edit_multiline(&mut self.result);
+                    ScrollArea::both() // both horizontal and vertical scrolling
+                        .auto_shrink([false; 2]) // prevent shrinking
+                        .show(ui, |ui| {
+                            ui.text_edit_multiline(&mut self.result);
+                        });
                 });
 
             });
@@ -151,18 +156,36 @@ impl eframe::App for LoAlFindApp {
                 if self.seq1_file.is_some() && self.seq2_file.is_some() && self.matrix_file.is_some() {
                     let (header1, sequence1) = read_fasta_sequence(self.seq1_file.as_ref().unwrap());
                     let (header2, sequence2) = read_fasta_sequence(self.seq2_file.as_ref().unwrap());
-                    let matrix: Result<similarity_matrix::SimilarityMatrix, String> = similarity_matrix::create_similarity_matrix_from_file(self.matrix_file.as_ref().unwrap());
-                    println!("{:?}", matrix);
+                    let matrix: similarity_matrix::SimilarityMatrix = similarity_matrix::create_similarity_matrix_from_file(self.matrix_file.as_ref().unwrap()).expect("Couldnt construct similarity matrix");
+                    let (similarity_score, alignment1, alignment2, anotation) = smith_waterman::smith_waterman(&sequence1, &sequence2, &matrix, self.gap_open.parse::<i32>().expect("Error"), self.gap_extend.parse::<i32>().expect("error"));
                     self.result = format!(
-                        "{}\n{}\n{}\n{}\nMatrix: {:?}\nGap h: {}\nGap g: {}",
+                        "{}\n{}\n{}\n{}\nMatrix: {:?}\nGap h: {}\nGap g: {}\n\nScore: {}\n{}\n{}\n{}",
                         header1,
                         sequence1,
                         header2,
                         sequence2,
                         self.matrix_file.as_ref().unwrap(),
                         self.gap_open,
-                        self.gap_extend
+                        self.gap_extend,
+                        similarity_score,
+                        spaced_string(&alignment1),
+                        spaced_string(&anotation),
+                        spaced_string(&alignment2)
                     );
+                    println!("{}, \n{}\n{}\n{}", similarity_score, alignment1, anotation, alignment2);
+
+                    
+                    if let Some(ref path) = self.result_path {
+                        let file_path = std::path::Path::new(path).join("alignment_result.txt");
+                        let mut file = File::create(&file_path).expect("Unable to create file"); // overwrites
+                        let file_path_string = file_path.display();
+                        file.write_all(self.result.as_bytes())
+                            .expect("Unable to write data");
+                        self.result.push_str(&format!(
+                            "\n\nResults saved in file {}",
+                            file_path_string
+                        ));
+                    }
                 } else {
                     self.result = "Error: Please select all required files".to_string();
                 }
@@ -191,4 +214,9 @@ fn read_fasta_sequence(path: &std::path::PathBuf) -> (String, String) {
         .join("");
 
     (header, sequence)
+}
+
+
+fn spaced_string(s: &String) -> String {
+    s.chars().map(|c| c.to_string()).collect::<Vec<_>>().join(" ")
 }
