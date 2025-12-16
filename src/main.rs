@@ -38,6 +38,7 @@ impl LoAlFindApp {
     }
 }
 
+//GUI Implamentation
 impl eframe::App for LoAlFindApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -87,7 +88,7 @@ impl eframe::App for LoAlFindApp {
                     
                     ui.add_space(5.0);
                     
-                    // File picker for matrix
+                    // File picker for matrix file
                     ui.horizontal(|ui| {
                         ui.label("Matrix file (BLOSUM62):");
                         if ui.button("Browse...").clicked() {
@@ -137,10 +138,11 @@ impl eframe::App for LoAlFindApp {
 
                 });
 
+                //Result printing in window
                 ui.vertical(|ui| {
                     ui.label("Result:");
-                    ScrollArea::both() // both horizontal and vertical scrolling
-                        .auto_shrink([false; 2]) // prevent shrinking
+                    ScrollArea::both() 
+                        .auto_shrink([false; 2])
                         .show(ui, |ui| {
                             ui.text_edit_multiline(&mut self.result);
                         });
@@ -175,6 +177,7 @@ impl eframe::App for LoAlFindApp {
                     println!("{}, \n{}\n{}\n{}", similarity_score, alignment1, anotation, alignment2);
 
                     
+                    //If selected output file aalso print there
                     if let Some(ref path) = self.result_path {
                         let file_path = std::path::Path::new(path).join("alignment_result.txt");
                         let mut file = File::create(&file_path).expect("Unable to create file"); // overwrites

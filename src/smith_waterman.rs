@@ -54,11 +54,11 @@ pub fn smith_waterman(
             let mut trace_val = 1u8; // default, came from M
 
             //Calculate the "arrows" in the traceback matrix A
-            if sub_from_gap_x >= max_val {
+            if sub_from_gap_x > max_val {
                 max_val = sub_from_gap_x;
                 trace_val = 2; // came from Ix
             }
-            if sub_from_gap_y >= max_val {
+            if sub_from_gap_y > max_val {
                 max_val = sub_from_gap_y;
                 trace_val = 3; // came from Iy
             }
@@ -73,12 +73,12 @@ pub fn smith_waterman(
             // Ix matrix
             let gap_x_from_m = alignment_score_sub[i - 1][j] - gap_open - gap_extend;
             let gap_x_extend = alignment_score_gap_x[i - 1][j] - gap_extend;
-            alignment_score_gap_x[i][j] = gap_x_from_m.max(gap_x_extend).max(0);
+            alignment_score_gap_x[i][j] = gap_x_from_m.max(gap_x_extend);
             
             // Iy matrix
             let gap_y_from_m = alignment_score_sub[i][j - 1] - gap_open - gap_extend;
             let gap_y_extend = alignment_score_gap_y[i][j - 1] - gap_extend;
-            alignment_score_gap_y[i][j] = gap_y_from_m.max(gap_y_extend).max(0);
+            alignment_score_gap_y[i][j] = gap_y_from_m.max(gap_y_extend);
             
             // Track maximum score
             if alignment_score_sub[i][j] > max_score {
@@ -151,7 +151,7 @@ fn construct_alignment(
                 // In Ix - gap in seq2
 
                 // Check if we should stop
-                if i == 0 || score_gap_x[i][j] == 0 {
+                if i == 0 {
                     break;
                 }
                 
@@ -162,12 +162,11 @@ fn construct_alignment(
                 
                 // Check if we should return to M or continue in Ix
                 if i > 0 {
-                    let would_open = score_sub[i][j] - gap_open - gap_extend;
-                    let would_extend = score_gap_x[i][j] - gap_extend;
-                    
-                    // If opening is better (or equal), we came from M, so return to M
-                    if would_open >= would_extend {
+                    if score_gap_x[i][j] == score_sub[i - 1][j] - gap_open - gap_extend
+                    {
                         current_matrix = 0;
+                    } else {
+                        current_matrix = 1;
                     }
                 }
             }
@@ -175,7 +174,7 @@ fn construct_alignment(
                 // In Iy - gap in seq1
 
                 // Check if we should stop
-                if j == 0 || score_gap_y[i][j] == 0 {
+                if j == 0 {
                     break;
                 }
                 
@@ -186,11 +185,11 @@ fn construct_alignment(
                 
                 // Check if we should return to M or continue in Iy
                 if j > 0 {
-                    let would_open = score_sub[i][j] - gap_open - gap_extend;
-                    let would_extend = score_gap_y[i][j] - gap_extend;
-                    
-                    if would_open >= would_extend {
+                if score_gap_y[i][j] == score_sub[i][j - 1] - gap_open - gap_extend
+                    {
                         current_matrix = 0;
+                    } else {
+                        current_matrix = 2;
                     }
                 }
             }
@@ -198,9 +197,6 @@ fn construct_alignment(
         }
     }
 
-    // Save alignment boundaries
-    let align_start_i = i;
-    let align_start_j = j;
 
     aligned_seq1.reverse();
     aligned_seq2.reverse();

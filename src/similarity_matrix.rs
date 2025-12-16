@@ -4,7 +4,6 @@ use std::io::{BufReader, BufRead};
 
 #[derive(Debug)]
 pub struct SimilarityMatrix {
-    pub alphabet: Vec<char>,
     pub scores: HashMap<(char, char), i32>,
 }
 
@@ -57,5 +56,5 @@ pub fn create_similarity_matrix_from_file(path: &std::path::PathBuf) -> Result<S
     }
   }
 
-  Ok(SimilarityMatrix {alphabet, scores})
+  Ok(SimilarityMatrix {scores})
 }
