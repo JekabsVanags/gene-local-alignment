@@ -159,7 +159,7 @@ impl eframe::App for LoAlFindApp {
                     let (header1, sequence1) = read_fasta_sequence(self.seq1_file.as_ref().unwrap());
                     let (header2, sequence2) = read_fasta_sequence(self.seq2_file.as_ref().unwrap());
                     let matrix: similarity_matrix::SimilarityMatrix = similarity_matrix::create_similarity_matrix_from_file(self.matrix_file.as_ref().unwrap()).expect("Couldnt construct similarity matrix");
-                    let (similarity_score, alignment1, alignment2, anotation) = smith_waterman::smith_waterman(&sequence1, &sequence2, &matrix, self.gap_open.parse::<i32>().expect("Error"), self.gap_extend.parse::<i32>().expect("error"));
+                    let (similarity_score, alignment1, alignment2, anotation) = smith_waterman::smith_waterman(&sequence1, &sequence2, &matrix, self.gap_open.parse::<f64>().expect("Error"), self.gap_extend.parse::<f64>().expect("error"));
                     self.result = format!(
                         "{}\n{}\n{}\n{}\nMatrix: {:?}\nGap h: {}\nGap g: {}\n\nScore: {}\n{}\n{}\n{}",
                         header1,

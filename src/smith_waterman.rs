@@ -4,33 +4,33 @@ pub fn smith_waterman(
     seq1: &str,              
     seq2: &str,              
     similarity_matrix: &SimilarityMatrix,
-    gap_open: i32,        
-    gap_extend: i32,       
-) -> (i32, String, String, String) { 
+    gap_open: f64,        
+    gap_extend: f64,       
+) -> (f64, String, String, String) { 
     let seq1_len = seq1.len();
     let seq2_len = seq2.len();
     
     // Three scoring matrices
-    let mut alignment_score_sub: Vec<Vec<i32>> = vec![vec![0; seq2_len + 1]; seq1_len + 1];
-    let mut alignment_score_gap_x: Vec<Vec<i32>> = vec![vec![0; seq2_len + 1]; seq1_len + 1];
-    let mut alignment_score_gap_y: Vec<Vec<i32>> = vec![vec![0; seq2_len + 1]; seq1_len + 1];
+    let mut alignment_score_sub: Vec<Vec<f64>> = vec![vec![0.0; seq2_len + 1]; seq1_len + 1];
+    let mut alignment_score_gap_x: Vec<Vec<f64>> = vec![vec![0.0; seq2_len + 1]; seq1_len + 1];
+    let mut alignment_score_gap_y: Vec<Vec<f64>> = vec![vec![0.0; seq2_len + 1]; seq1_len + 1];
     
     // 0 = stop, 1 = from M, 2 = from Ix, 3 = from Iy
     let mut traceback: Vec<Vec<u8>> = vec![vec![0; seq2_len + 1]; seq1_len + 1];
     
     // Initializing gap matrix
     for i in 1..=seq1_len {
-        alignment_score_gap_x[i][0] = -(gap_open + (i as i32) * gap_extend);
+        alignment_score_gap_x[i][0] = -(gap_open + (i as f64) * gap_extend);
     }
 
     for j in 1..=seq2_len {
-        alignment_score_gap_y[0][j] = -(gap_open + (j as i32) * gap_extend);
+        alignment_score_gap_y[0][j] = -(gap_open + (j as f64) * gap_extend);
     }
 
     // Track the highest score in M matrix
-    let mut max_score = 0;
-    let mut max_i = 0;
-    let mut max_j = 0;
+    let mut max_score: f64 = 0.0;
+    let mut max_i: usize = 0;
+    let mut max_j: usize = 0;
 
     // Collect array of characters for O(1) access
     let s1: Vec<char> = seq1.chars().collect();
@@ -43,7 +43,7 @@ pub fn smith_waterman(
             let char2 = s2[j-1];
             
             // Score from similarity matrix
-            let score = similarity_matrix.get_score(char1, char2).unwrap_or(0);
+            let score: f64 = similarity_matrix.get_score(char1, char2).unwrap_or(0) as f64;
             
             // M matrix
             let sub_from_sub = alignment_score_sub[i - 1][j - 1] + score;
@@ -62,8 +62,8 @@ pub fn smith_waterman(
                 max_val = sub_from_gap_y;
                 trace_val = 3; // came from Iy
             }
-            if max_val < 0 {
-                max_val = 0;
+            if max_val < 0.0 {
+                max_val = 0.0;
                 trace_val = 0; // reset
             }
 
@@ -104,11 +104,11 @@ fn construct_alignment(
     seq1: &str, 
     seq2: &str, 
     traceback: &Vec<Vec<u8>>,
-    score_sub: &Vec<Vec<i32>>,
-    score_gap_x: &Vec<Vec<i32>>,
-    score_gap_y: &Vec<Vec<i32>>,
-    gap_open: i32,
-    gap_extend: i32
+    score_sub: &Vec<Vec<f64>>,
+    score_gap_x: &Vec<Vec<f64>>,
+    score_gap_y: &Vec<Vec<f64>>,
+    gap_open: f64,
+    gap_extend: f64
 ) -> (String, String, String) {
     let s1: Vec<char> = seq1.chars().collect();
     let s2: Vec<char> = seq2.chars().collect();
